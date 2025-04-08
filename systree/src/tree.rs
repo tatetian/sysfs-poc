@@ -1,5 +1,6 @@
 use crate::utils::SysBranchNodeFields;
 
+/// A tree structure to expose the system state.
 pub struct SysTree {
     root: Arc<SysTreeRoot>,
     event_hub: SysEventHub,
@@ -17,7 +18,7 @@ impl SysTree {
         &self.root
     }
 
-    pub fn register_observer(&self, observer: Weak<dyn Observer<SysEvent>>, filter: SysEventFilter)
+    pub fn register_observer(&self, observer: Weak<dyn Observer<SysEvent>>, filter: SysEventSelector)
     {
         self.event_hub.register_observer(observer, filter)
     }
@@ -27,7 +28,7 @@ impl SysTree {
         self.event_hub.unregister_observer(observer)
     }
     
-    pub fn publish_event(&self, node: &dyn SysTreeNode, action: SysEventAction, details: Vec<SysEventKv>) {
+    pub fn publish_event(&self, node: &dyn SysNode, action: SysEventAction, details: Vec<SysEventKv>) {
         self.event_hub.publish_event(node, action, details)
     }
 }
@@ -36,8 +37,8 @@ struct SysTreeRoot(SysBranchNodeFields<dyn SysNode>);
 
 impl SysTreeRoot {
     pub fn new() -> Arc<Self> {
-        let name = "systree";
-        let attr_set = SysAttrSet::new_empty();
+        let name = ""; // Only the root has an empty name
+        let attr_set = SysAttrSet::new_empty(); // The root has no attributes
         let inner = SysBranchNodeFields::new(name, attr_set);
         Arc::new(Self(inner))
     }

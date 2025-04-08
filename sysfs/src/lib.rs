@@ -10,4 +10,6 @@ pub fn singleton() -> &'static Arc<SysFs> {
     SINGLETON.get()
 }
 
-// todo: write the init logic
+pub fn init() {
+    todo!("init the FS singleton")
+}

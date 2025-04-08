@@ -105,12 +105,20 @@ pub trait SysBranchNode: SysNode {
 /// This trait abstracts the common interface of "normal" nodes.
 /// In particular, every "normal" node may have associated attributes.
 pub trait SysNode: SysObj {
+    /// Returns the attribute set of a `SysNode`.
     fn node_attrs(&self) -> &SysAttrSet;
 
+    /// Reads the value of an attribute.
     fn read_attr(&self, name: &str, writer: &mut VmWriter) -> Result<usize>;
 
+    /// Writes the value of an attribute.
     fn write_attr(&self, name: &str, reader: &mut VmReader) -> Result<()>;
 
+    /// Shows the string value of an attribute.
+    ///
+    /// Most attributes are textual, rather binary (see `SysAttrFlags::IS_BINARY`).
+    /// So using this `show_attr` method is more convenient than
+    /// the `read_attr` method.
     fn show_attr(&self, name: &str) -> Result<String> {
         let mut buf: Vec<u8> = vec![0; PAGE_SIZE];
         let mut writer = VmWriter::from(buf.as_mut_slice());
@@ -119,6 +127,11 @@ pub trait SysNode: SysObj {
         Ok(attr_val)
     }
 
+    /// Stores the string value of an attribute.
+    ///
+    /// Most attributes are textual, rather binary (see `SysAttrFlags::IS_BINARY`).
+    /// So using this `store_attr` method is more convenient than
+    /// the `write_attr` method.
     fn store_attr(&self, name: &str, new_val: &str) -> Result<()> {
         let mut reader = VmReader::from(new_val.as_slice());
         self.write_attr(name, &mut reader)
@@ -171,10 +184,12 @@ pub trait SysObj: Any + Send + Sync + Debug + 'static {
     }
 }
 
+/// The unique ID of a `SysNode`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SysNodeId(u64);
 
 impl SysNodeId {
+    /// Creates a new ID.
     pub fn new() -> Self {
         static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 
@@ -185,9 +200,8 @@ impl SysNodeId {
         Self(next_id)
     }
 
+    /// Gets the value of the ID.
     pub fn as_u64(&self) -> u64 {
         self.0
     }
 }
-
-pub type SysStr = Cow<'static, str>;

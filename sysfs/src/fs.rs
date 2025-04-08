@@ -1,27 +1,30 @@
+use systree::SysTree;
 
+use crate::inode::{SysFsInode};
+
+/// A file system for exposing kernel information to the user space.
 pub struct SysFs {
     sb: SuperBlock,
-    model: SysTree,
+    systree: &'static SysTree,
     root: Arc<dyn Inode>,
-    this: Weak<Self>,
 }
 
 // These parameters are same as those of Linux.
 const MAGIC_NUMBER: u64 = 0x62656572;
 const BLOCK_SIZE: usize = 1024;
+const NAME_MAX: usize = 255;
 
 impl SysFs {
-    pub(crate) fn new(model: Arc<SysTree>) -> Self {
-        let new_self = Arc::new_cyclic(move |weak_fs| {
-            let root = SysFsInode::new_root(model.root.clone(), weak_fs.clone());
-            Self {
-                sb: SuperBlock::new(MAGIC_NUMBER, BLOCK_SIZE, NAME_MAX),
-                model,
-                root,
-                this: weak_fs.clone(),
-            }
-        });
-        new_self
+    pub(crate) fn new() -> Self {
+        let sb = SuperBlock::new(MAGIC_NUMBER, BLOCK_SIZE, NAME_MAX);
+        let systree = systree::singleton();
+        let root = SysFsInode::new_root();
+        let new_self = Self {
+            sb, 
+            systree, 
+            root,
+        };
+        Arc::new(new_self)
     }
 }
 
